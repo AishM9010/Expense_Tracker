@@ -1,10 +1,10 @@
 const CACHE = 'expense-tracker-v1';
 const ASSETS = [
-  '/expense-tracker/',
-  '/expense-tracker/index.html',
-  '/expense-tracker/manifest.json',
-  '/expense-tracker/icon-192.png',
-  '/expense-tracker/icon-512.png',
+  '/Expense_Tracker/',
+  '/Expense_Tracker/index.html',
+  '/Expense_Tracker/manifest.json',
+  '/Expense_Tracker/icon-192.png',
+  '/Expense_Tracker/icon-512.png',
 ];
 
 self.addEventListener('install', e => {
@@ -16,7 +16,6 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Network first for API calls, cache first for assets
   if (e.request.url.includes('googleapis.com') || e.request.url.includes('anthropic.com') || e.request.url.includes('accounts.google.com')) {
     e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
     return;
