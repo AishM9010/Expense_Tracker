@@ -107,6 +107,12 @@ input:checked+.slider:before{transform:translateX(18px);}
 </head>
 <body>
 <div class="app">
+  <div id="install-banner" style="display:none;align-items:center;gap:10px;padding:10px 16px;background:#E6F1FB;border-bottom:1px solid #B5D4F4;font-size:13px;">
+    <span style="flex:1;">Add to home screen for the best experience</span>
+    <button class="btn btn-sm btn-primary" onclick="triggerInstall()">Install app</button>
+    <button onclick="document.getElementById('install-banner').style.display='none'" style="border:none;background:none;font-size:16px;color:#999;cursor:pointer;padding:4px;">✕</button>
+  </div>
+
   <div class="sync-bar">
     <div class="sync-dot disconnected" id="sync-dot"></div>
     <span id="sync-label" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Not connected</span>
@@ -759,6 +765,42 @@ async function handleUpload(event){
     status.innerHTML=`<div class="ai-result"><div style="font-weight:500;margin-bottom:4px;">AI extracted</div><div style="color:#666;">₹${parsed.amount||'?'} · ${parsed.description||''} · <span style="color:${parsed.confidence==='high'?'#1D9E75':'#BA7517'}">${parsed.confidence} confidence</span></div><div style="font-size:11px;color:#999;margin-top:4px;">Review and tap Save.</div></div>`;
   }catch(e){status.innerHTML=`<div style="color:#D85A30;font-size:13px;padding:8px 0;">Could not parse. Fill manually.</div>`;}
 }
+
+// ── PWA Install ───────────────────────────────────────────────
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  deferredPrompt=e;
+  document.getElementById('install-banner').style.display='flex';
+});
+window.addEventListener('appinstalled',()=>{
+  document.getElementById('install-banner').style.display='none';
+  showToast('App installed! ✓');
+});
+function triggerInstall(){
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(()=>{deferredPrompt=null;document.getElementById('install-banner').style.display='none';});
+  } else {
+    // iOS or prompt not available — show manual instructions
+    const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+    if(isIOS){
+      alert('To install on iPhone:\n\n1. Tap the Share button (box with arrow) at the bottom of Safari\n2. Scroll down and tap "Add to Home Screen"\n3. Tap "Add"');
+    } else {
+      alert('To install on Android:\n\n1. Tap the three-dot menu (⋮) in Chrome\n2. Tap "Add to Home screen"\n3. Tap "Add"\n\nIf you don\'t see that option, try opening this page in Chrome (not another browser).');
+    }
+  }
+}
+
+// Show banner on load if not installed and prompt not yet fired (iOS case)
+window.addEventListener('load',()=>{
+  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone;
+  if(!isStandalone){
+    // Always show banner — either for native prompt (Android) or manual guide (iOS)
+    setTimeout(()=>{document.getElementById('install-banner').style.display='flex';},1000);
+  }
+});
 
 // ── Service Worker ────────────────────────────────────────────
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
